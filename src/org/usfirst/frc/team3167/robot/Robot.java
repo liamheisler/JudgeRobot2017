@@ -25,10 +25,10 @@ public class Robot extends IterativeRobot {
     SendableChooser chooser;
     
     private final Joystick stick = new Joystick(1);
-    /*private final Talon motor1 = new Talon(1); 
+    private final Talon motor1 = new Talon(1); 
     private final Talon motor2 = new Talon(2); 
     private final Talon motor3 = new Talon(3); 
-    private final Talon motor4 = new Talon(4);*/
+    private final Talon motor4 = new Talon(4);
     
     private final Jaguar climberMotor = new Jaguar(5);
     private final Jaguar gearMotor = new Jaguar(6);
@@ -41,6 +41,7 @@ public class Robot extends IterativeRobot {
     private final Encoder encoder4 = new Encoder(15, 16, false, EncodingType.k4X); 
     
     private Climber climber = new Climber(5); 
+    private RobotConfiguration robotConfig = new RobotConfiguration(); 
 	
     /**
      * This function is run when the robot is first started up and should be
@@ -69,7 +70,7 @@ public class Robot extends IterativeRobot {
     }
 
     /**
-     * This function is called periodically during autonomous
+     * This function is called periodically during autonomous.
      */
     public void autonomousPeriodic() {
     	switch(autoSelected) {
@@ -86,28 +87,49 @@ public class Robot extends IterativeRobot {
     /**
      * This function is called periodically during operator control
      */
-    public void teleopPeriodic() {
+    public void teleopPeriodic() {  
+    	double x = 0.6;
+    	double y = 0.6;
+    	double rot = 0.6; 
+    	//feed in hard numbers to determine encoder functionality
+    	drive.mecanumDrive_Cartesian(x, y, rot, 0);
+    	
+    	//put encoder and motor speed readouts to SmartDashboard (testing)
+    	SmartDashboard.putNumber("motor1: ", motor1.getSpeed());
     	SmartDashboard.putNumber("encoder1: ", encoder1.getRate());
+    	
+    	SmartDashboard.putNumber("motor2: ", motor2.getSpeed());
     	SmartDashboard.putNumber("encoder2: ", encoder2.getRate());
+    	
+    	SmartDashboard.putNumber("motor3: ", motor3.getSpeed());
     	SmartDashboard.putNumber("encoder3: ", encoder3.getRate());
+    	
+    	SmartDashboard.putNumber("motor4: ", motor4.getSpeed());
     	SmartDashboard.putNumber("encoder4: ", encoder4.getRate());
     	
-    	//feed in hard numbers to determine encoder functionality
-    	drive.mecanumDrive_Cartesian(0.6, 0.6, 0.6, 0);
-    	
     	//handle climber (with multiple speeds)
-    	if(stick.getRawButton(1))
+    	//could remove reverse spins (currently just a fail-safe)
+    	if(stick.getRawButton(1)) {
     		climber.slowSpin();
-    	else if(stick.getRawButton(2))
+    		SmartDashboard.putString("Climber function: ", robotConfig.slowSpinMSG);
+    	}
+    	else if(stick.getRawButton(2)) {
     		climber.slowSpinReverse();
-    	else if(stick.getRawButton(5))
+    	}
+    	else if(stick.getRawButton(5)) {
     		climber.mediumSpin();
-    	else if(stick.getRawButton(3))
+    		SmartDashboard.putString("Climber function: ", robotConfig.mediumSpinMSG);
+    	}
+    	else if(stick.getRawButton(3)) {
     		climber.mediumSpinReverse();
-    	else if(stick.getRawButton(6))
+    	}
+    	else if(stick.getRawButton(6)) {
     		climber.fullSpin();
-    	else if(stick.getRawButton(4))
+    		SmartDashboard.putString("Climber function: ", robotConfig.fullSpinMSG);
+    	}
+    	else if(stick.getRawButton(4)) {
     		climber.fullSpinReverse();
+    	}
     }
     
     /**
@@ -115,6 +137,10 @@ public class Robot extends IterativeRobot {
      */
     public void testPeriodic() {
     
+    }
+    
+    public void disabledInit() {
+    	System.out.println("The robot is ready to rock and roll!");
     }
     
 }
