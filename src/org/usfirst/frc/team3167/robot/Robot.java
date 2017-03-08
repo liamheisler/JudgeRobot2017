@@ -22,9 +22,6 @@ public class Robot extends IterativeRobot {
     private Joystick stick1, stick2;
     private Talon motor1, motor2, motor3, motor4; 
     
-    /*private final HardNumTestDrive drive 
-    	= new HardNumTestDrive(1, 2, 3, 4, 10, 11, 12, 13
-    			, 14, 15, 16, 17); //incorrect positions */
     private SimpleMecanumDrive drive;
     private boolean slideLocked = false; 
     
@@ -56,7 +53,6 @@ public class Robot extends IterativeRobot {
     	motor3 = new Talon(3);
     	motor4 = new Talon(4); 
     	
-    	//drive = new HardNumTestDrive(1, 2, 3, 4, 10, 11, 12, 13, 14, 15, 16, 17); 
     	drive = new SimpleMecanumDrive(motor1, motor2, motor3, motor4);
     	slideLocked = false;
     	
