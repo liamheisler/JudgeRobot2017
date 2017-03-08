@@ -1,15 +1,15 @@
 
 package org.usfirst.frc.team3167.robot;
 
-import edu.wpi.first.wpilibj.CounterBase.EncodingType;
-import edu.wpi.first.wpilibj.Encoder;
+import org.usfirst.frc.team3167.autonomous.Autonomous;
+import org.usfirst.frc.team3167.drive.SimpleMecanumDrive;
+import org.usfirst.frc.team3167.objectcontrol.Climber;
+import org.usfirst.frc.team3167.objectcontrol.GearHanger;
+import org.usfirst.frc.team3167.visionstreaming.Vision;
+
 import edu.wpi.first.wpilibj.IterativeRobot;
-import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Talon;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -18,40 +18,63 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * creating this project, you must also update the manifest file in the resource
  * directory.
  */
-public class Robot extends IterativeRobot {
-    final String defaultAuto = "Default";
-    final String customAuto = "My Auto";
-    String autoSelected;
-    SendableChooser chooser;
+public class Robot extends IterativeRobot {   
+    private Joystick stick1, stick2;
+    private Talon motor1, motor2, motor3, motor4; 
     
-    private final Joystick stick = new Joystick(1);
-    private final Talon motor1 = new Talon(1); 
-    private final Talon motor2 = new Talon(2); 
-    private final Talon motor3 = new Talon(3); 
-    private final Talon motor4 = new Talon(4);
+    /*private final HardNumTestDrive drive 
+    	= new HardNumTestDrive(1, 2, 3, 4, 10, 11, 12, 13
+    			, 14, 15, 16, 17); //incorrect positions */
+    private SimpleMecanumDrive drive;
+    private boolean slideLocked = false; 
     
-    private final Jaguar climberMotor = new Jaguar(5);
-    private final Jaguar gearMotor = new Jaguar(6);
-    private final RobotDrive drive = new RobotDrive(1, 2, 3, 4); //DET. POSITIONS 
+    /*private EncodingType encodingType;
+    private Encoder encoder1;
+    private Encoder encoder2;
+    private Encoder encoder3;
+    private Encoder encoder4; */
+   
+    private Climber climber;
+    private GearHanger gearHanger;
     
-    //corresponds to motor numbers
-    private final Encoder encoder1 = new Encoder(10, 11, false, EncodingType.k4X);
-    private final Encoder encoder2 = new Encoder(12, 13, false, EncodingType.k4X);
-    private final Encoder encoder3 = new Encoder(14, 15, false, EncodingType.k4X); 
-    private final Encoder encoder4 = new Encoder(15, 16, false, EncodingType.k4X); 
+    private double autoSpeed;
+    private double driveTime;
+    private Autonomous auto;
     
-    private Climber climber = new Climber(5); 
-    private RobotConfiguration robotConfig = new RobotConfiguration(); 
+    private Vision vision; 
+    private String cameraLocation; 
 	
     /**
      * This function is run when the robot is first started up and should be
      * used for any initialization code.
      */
     public void robotInit() {
-        chooser = new SendableChooser();
-        chooser.addDefault("Default Auto", defaultAuto);
-        chooser.addObject("My Auto", customAuto);
-        SmartDashboard.putData("Auto choices", chooser);
+    	stick1 = new Joystick(1); 
+    	stick2 = new Joystick(2); 
+    	motor1 = new Talon(1);
+    	motor2 = new Talon(2); 
+    	motor3 = new Talon(3);
+    	motor4 = new Talon(4); 
+    	
+    	//drive = new HardNumTestDrive(1, 2, 3, 4, 10, 11, 12, 13, 14, 15, 16, 17); 
+    	drive = new SimpleMecanumDrive(motor1, motor2, motor3, motor4);
+    	slideLocked = false;
+    	
+    	/*encodingType = EncodingType.k4X; 
+    	encoder1 = new Encoder(10, 11, false, encodingType);
+    	encoder2 = new Encoder(12, 13, false, encodingType);
+    	encoder3 = new Encoder(14, 15, false, encodingType); 
+    	encoder4 = new Encoder(15, 16, false, encodingType); */
+    	
+    	climber = new Climber(stick1, stick2, 5); 
+    	gearHanger = new GearHanger(stick1, stick2, 6, 1, 0); 
+    	
+    	autoSpeed = 0.75;
+    	driveTime = 3.0;
+    	auto = new Autonomous(drive, autoSpeed, driveTime); 
+    	
+    	vision = new Vision();
+    	cameraLocation = "cam0";
     }
     
 	/**
@@ -64,72 +87,33 @@ public class Robot extends IterativeRobot {
 	 * If using the SendableChooser make sure to add them to the chooser code above as well.
 	 */
     public void autonomousInit() {
-    	autoSelected = (String) chooser.getSelected();
-//		autoSelected = SmartDashboard.getString("Auto Selector", defaultAuto);
-		System.out.println("Auto selected: " + autoSelected);
+    	
     }
 
     /**
      * This function is called periodically during autonomous.
      */
     public void autonomousPeriodic() {
-    	switch(autoSelected) {
-    	case customAuto:
-        //Put custom auto code here   
-            break;
-    	case defaultAuto:
-    	default:
-    	//Put default auto code here
-            break;
-    	}
+    	auto.run();   	
+    }
+    
+    public void teleopInit() {
+    	vision.enable(cameraLocation);
     }
 
     /**
      * This function is called periodically during operator control
      */
     public void teleopPeriodic() {  
-    	double x = 0.6;
-    	double y = 0.6;
-    	double rot = 0.6; 
-    	//feed in hard numbers to determine encoder functionality
-    	drive.mecanumDrive_Cartesian(x, y, rot, 0);
-    	
-    	//put encoder and motor speed readouts to SmartDashboard (testing)
-    	SmartDashboard.putNumber("motor1: ", motor1.getSpeed());
-    	SmartDashboard.putNumber("encoder1: ", encoder1.getRate());
-    	
-    	SmartDashboard.putNumber("motor2: ", motor2.getSpeed());
-    	SmartDashboard.putNumber("encoder2: ", encoder2.getRate());
-    	
-    	SmartDashboard.putNumber("motor3: ", motor3.getSpeed());
-    	SmartDashboard.putNumber("encoder3: ", encoder3.getRate());
-    	
-    	SmartDashboard.putNumber("motor4: ", motor4.getSpeed());
-    	SmartDashboard.putNumber("encoder4: ", encoder4.getRate());
-    	
-    	//handle climber (with multiple speeds)
-    	//could remove reverse spins (currently just a fail-safe)
-    	if(stick.getRawButton(1)) {
-    		climber.slowSpin();
-    		SmartDashboard.putString("Climber function: ", robotConfig.slowSpinMSG);
-    	}
-    	else if(stick.getRawButton(2)) {
-    		climber.slowSpinReverse();
-    	}
-    	else if(stick.getRawButton(5)) {
-    		climber.mediumSpin();
-    		SmartDashboard.putString("Climber function: ", robotConfig.mediumSpinMSG);
-    	}
-    	else if(stick.getRawButton(3)) {
-    		climber.mediumSpinReverse();
-    	}
-    	else if(stick.getRawButton(6)) {
-    		climber.fullSpin();
-    		SmartDashboard.putString("Climber function: ", robotConfig.fullSpinMSG);
-    	}
-    	else if(stick.getRawButton(4)) {
-    		climber.fullSpinReverse();
-    	}
+    	if(stick1.getRawButton(2))
+    		slideLocked = true; 
+    	else
+    		slideLocked = false; 
+    	   	
+    	//handle all aspects of the robot
+    	drive.Drive(-stick1.getX(), stick1.getY(), -stick1.getTwist(), slideLocked);
+    	climber.operate();
+    	gearHanger.hangGear(0.7);
     }
     
     /**
